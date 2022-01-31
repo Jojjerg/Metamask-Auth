@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Web3 auth</title>
+        <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script> 
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="flex flex-col w-screen h-screen justify-center items-center">
+        <button 
+            id="loginBtn"
+            class="rounded-full bg-orange-400 p-4 text-zinc-900 font-bold hover:bg-orange-500 focus:outline-none" 
+        >
+            Login with Metamask
+        </button>   
+        <p 
+            id="userWallet" 
+            class="text-md text-center text-gray-500 mt-3"
+        >
+        </p>
+        <span
+            id="userBalance"
+            class="text-md text-center text-gray-500 mt-3"
+        >
+        </span>
+        <script>
+            window.userWalletAddress = null
+            window.userWalletBalance = null
+
+            const loginButton = document.getElementById('loginBtn')
+            const userWallet = document.getElementById('userWallet')
+            const userBalance = document.getElementById('userBalance')
+
+            function toggleButton(){
+                if(!window.ethereum){
+                    loginButton.innerText = 'Metamask is not installed'
+                    loginButton.classList.remove('bg-blue-500', 'text-white', 'hover:bg-orange-500')
+                    loginButton.classList.add('bg-gray-200', 'text-gray-400', 'cursor-not-allowed')
+                    return false 
+                }
+                loginButton.addEventListener('click', loginWithMetamask)
+            }
+
+            async function loginWithMetamask(){
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+                .catch((e) => {
+                    console.error(e.message)
+                    return
+                })  
+
+                if(!accounts) return
+
+                window.userWalletAddress = accounts[0]
+
+                const encryptedBalance = await window.ethereum.request({ method: 'eth_getBalance', params: [window.userWalletAddress, 'latest'] })
+                .catch((e) => {
+                    console.error(e.message)
+                    return
+                }) 
+                decryptedBalance = parseFloat(encryptedBalance, 16)
+
+                window.userWalletBalance = decryptedBalance
+        
+                userWallet.innerText = ('Address: ' + window.userWalletAddress)
+                userBalance.innerText = ('Balance: ' + window.userWalletBalance + ' ETH')
+
+                loginButton.innerText = 'Logout from Metamask'
+                loginButton.removeEventListener('click', loginWithMetamask)
+                setTimeout(() => {
+                    loginButton.addEventListener('click',logoutFromMetamask)
+                }, 200)
+            }
+
+            function logoutFromMetamask(){
+                window.userWalletAddress = null
+                window.userWalletBalance = null
+
+                userBalance.innerText = ''
+                userWallet.innerText = '' 
+                loginButton.innerText = 'Login with Metamask'
+
+                loginButton.removeEventListener('click', logoutFromMetamask)
+                setTimeout(() => {
+                    loginButton.addEventListener('click', loginWithMetamask)
+                }, 200)
+            }
+
+            window.addEventListener('DOMContentLoaded', (event) => {
+                toggleButton()
+            })
+        </script>
+    </body>
+</html>
